@@ -9,6 +9,8 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import static java.util.stream.Collectors.toList;
+
 @Service
 @RequiredArgsConstructor
 public class StudentService {
@@ -37,6 +39,14 @@ public class StudentService {
     public StudentResponseDto getStudentById(Long id) {
         Student student = findStudentOrThrow(id);
         return toResponseDto(student);
+    }
+
+    public List<StudentResponseDto> searchStudentByName(String name){
+        return studentRepository
+                .findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCase(name, name)
+                .stream()
+                .map(this::toResponseDto)
+                .toList();
     }
 
     public StudentResponseDto updateStudent(Long id, StudentRequestDto requestDto) {

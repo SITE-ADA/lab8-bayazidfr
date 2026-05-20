@@ -12,14 +12,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/courses")
@@ -40,6 +33,15 @@ public class CourseController {
     @Operation(summary = "Get all courses", description = "Returns all courses.")
     public ResponseEntity<List<CourseResponseDto>> getAllCourses() {
         return ResponseEntity.ok(courseService.getAllCourses());
+    }
+    
+    @GetMapping("/by-student-name")
+    @Operation(
+            summary = "Get courses by student name",
+            description = "Returns courses associated with students whose first name or last name contains the provied name."
+    )
+    public ResponseEntity<List<CourseResponseDto>> getCoursesByStudentName(@RequestParam String name) {
+        return ResponseEntity.ok(courseService.getCoursesByStudentName(name));
     }
 
     @GetMapping("/{id}")

@@ -119,6 +119,18 @@ public class CourseService {
         return new CourseStudentsResponseDto(course.getId(), course.getTitle(), students);
     }
 
+    public List<CourseResponseDto> getCoursesByStudentName(String name) {
+        List<StudentDto> students = studentFeignClient.searchStudentsByName(name);
+
+        return students.stream()
+                .flatMap(student -> enrollmentRepository.findByStudentId(student.getId()).stream())
+                .map(Enrollment::getCourseId)
+                .distinct()
+                .map(this::findCourseOrThrow)
+                .map(this::toCourseResponseDto)
+                .toList();
+    }
+
     private void validateStudentWithFeign(Long studentId) {
         try {
             log.debug("Validating student {} via Feign", studentId);
