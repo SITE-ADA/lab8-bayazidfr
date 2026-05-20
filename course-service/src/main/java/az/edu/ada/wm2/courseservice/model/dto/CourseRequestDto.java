@@ -14,18 +14,18 @@ import lombok.Setter;
 @AllArgsConstructor
 public class CourseRequestDto {
 
-    @Schema(description = "Course title", example = "Data Structures")
+    @Schema(description = "Kursun adı", example = "Data Structures")
     @NotBlank(message = "Title is required")
     private String title;
 
-    @Schema(description = "Course code", example = "CS201")
+    @Schema(description = "Kursun kodu", example = "CS201")
     @NotBlank(message = "Code is required")
     private String code;
 
-    @Schema(description = "Credit count", example = "4")
+    @Schema(description = "Kredit sayı", example = "4")
     @Positive(message = "Credits must be positive")
     private Integer credits;
 
-    @Schema(description = "Prerequisite course id. If there is no prerequisite, send null.", example = "1")
+    @Schema(description = "Prerequisite kursun ID-si. Əgər prerequisite yoxdursa null göndərilir.", example = "1")
     private Long prerequisiteCourseId;
 }
