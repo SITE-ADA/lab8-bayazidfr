@@ -1,10 +1,7 @@
 package az.edu.ada.wm2.courseservice.service;
 
 import az.edu.ada.wm2.courseservice.client.StudentFeignClient;
-import az.edu.ada.wm2.courseservice.exception.CourseNotFoundException;
-import az.edu.ada.wm2.courseservice.exception.EnrollmentAlreadyExistsException;
-import az.edu.ada.wm2.courseservice.exception.RemoteStudentNotFoundException;
-import az.edu.ada.wm2.courseservice.exception.StudentServiceCommunicationException;
+import az.edu.ada.wm2.courseservice.exception.*;
 import az.edu.ada.wm2.courseservice.model.dto.CourseRequestDto;
 import az.edu.ada.wm2.courseservice.model.dto.CourseResponseDto;
 import az.edu.ada.wm2.courseservice.model.dto.CourseStudentsResponseDto;
@@ -43,6 +40,7 @@ public class CourseService {
                 .title(requestDto.getTitle())
                 .code(requestDto.getCode())
                 .credits(requestDto.getCredits())
+                .prerequisiteCourseId(requestDto.getPrerequisiteCourseId())
                 .build();
 
         Course savedCourse = courseRepository.save(course);
@@ -67,6 +65,7 @@ public class CourseService {
         existingCourse.setTitle(requestDto.getTitle());
         existingCourse.setCode(requestDto.getCode());
         existingCourse.setCredits(requestDto.getCredits());
+        existingCourse.setPrerequisiteCourseId(requestDto.getPrerequisiteCourseId());
 
         Course updatedCourse = courseRepository.save(existingCourse);
         return toCourseResponseDto(updatedCourse);
@@ -79,13 +78,14 @@ public class CourseService {
 
     public EnrollmentResponseDto enrollStudent(Long courseId, Long studentId) {
         log.debug("Enrolling student {} into course {}", studentId, courseId);
-        findCourseOrThrow(courseId);
+        Course course = findCourseOrThrow(courseId);
 
         if (enrollmentRepository.existsByCourseIdAndStudentId(courseId, studentId)) {
             throw new EnrollmentAlreadyExistsException(courseId, studentId);
         }
 
         validateStudentWithFeign(studentId);
+        validatePrerequisite(course, studentId);
 
         Enrollment enrollment = Enrollment.builder()
                 .courseId(courseId)
@@ -147,12 +147,30 @@ public class CourseService {
         return courseRepository.findById(id).orElseThrow(() -> new CourseNotFoundException(id));
     }
 
+    private void validatePrerequisite(Course course, Long studentId){
+        Long prerequisiteCourseId = course.getPrerequisiteCourseId();
+
+        if (prerequisiteCourseId == null){
+            return;
+        }
+
+        boolean prerequisiteCompleted = enrollmentRepository.existsByCourseIdAndStudentId(
+                prerequisiteCourseId,
+                studentId
+        );
+
+        if (!prerequisiteCompleted){
+            throw new PrerequisiteNotSatisfiedException(course.getId(), prerequisiteCourseId, studentId);
+        }
+    }
+
     private CourseResponseDto toCourseResponseDto(Course course) {
         return new CourseResponseDto(
                 course.getId(),
                 course.getTitle(),
                 course.getCode(),
-                course.getCredits()
+                course.getCredits(),
+                course.getPrerequisiteCourseId()
         );
     }
 }
